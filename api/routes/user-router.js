@@ -11,19 +11,23 @@ router.post("/register", (req, res) => {
   let user = req.body;
   const hash = bcrypt.hashSync(user.password, 13);
   user.password = hash;
+  user.username = req.session.username;
   users
     .add(user)
     .then(saved => {
       res.status(201).json(saved);
+      console.log(req.session.user);
     })
     .catch(error => {
       res.status(500).json(error);
+      console.log(error);
+      console.log(user);
     });
 });
 
 router.post("/login", (req, res) => {
   let { username, password } = req.body;
-
+  username = req.session.username;
   users
     .findBy({ username })
     .first()
@@ -46,6 +50,20 @@ router.get("/users", protected, (req, res) => {
       res.json(users);
     })
     .catch(err => res.send(err));
+});
+
+router.post("/logout", (req, res) => {
+  if (req.session) {
+    req.session.destroy(err => {
+      if (err) {
+        res.send("Could not log you out!");
+      } else {
+        res.send("Successfully logged out!");
+      }
+    });
+  } else {
+    res.end();
+  }
 });
 
 module.exports = router;
